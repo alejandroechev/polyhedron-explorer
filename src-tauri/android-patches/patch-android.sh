@@ -4,7 +4,6 @@
 set -euo pipefail
 
 GRADLE="src-tauri/gen/android/app/build.gradle.kts"
-MANIFEST="src-tauri/gen/android/app/src/main/AndroidManifest.xml"
 RES="src-tauri/gen/android/app/src/main/res"
 
 if [ -f "$GRADLE" ]; then
@@ -13,15 +12,12 @@ if [ -f "$GRADLE" ]; then
   echo "minSdk set to 28"
 fi
 
-if [ -f "$MANIFEST" ]; then
-  # The 3D view is the whole app, so keep it landscape-capable but never let a
-  # rotation restart the activity and drop the WebGL context.
-  if ! grep -q 'android:configChanges="[^"]*screenSize' "$MANIFEST"; then
-    echo "configChanges already covers rotation (default Tauri manifest)"
-  fi
-fi
-
 if [ -d "src-tauri/icons/android" ]; then
-  cp -r src-tauri/icons/android/mipmap-* "$RES/" 2>/dev/null || true
-  echo "copied launcher icons"
+  # Copies the adaptive-icon mipmaps *and* values/ic_launcher_background.xml.
+  # Without the colour resource, aapt fails with
+  # "resource color/ic_launcher_background not found".
+  cp -r src-tauri/icons/android/. "$RES/"
+  echo "copied launcher icons and resources"
+  test -f "$RES/values/ic_launcher_background.xml" ||
+    { echo "launcher background colour missing"; exit 1; }
 fi
