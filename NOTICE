@@ -1,0 +1,34 @@
+# Third-party data and software
+
+## Encyclopedia of Polyhedra (George W. Hart)
+
+`src/data/polyhedra.json` contains vertex and face data for the Platonic,
+Archimedean and Johnson solids derived from the mathematical model files of the
+Encyclopedia of Polyhedra by George W. Hart (https://www.georgehart.com/).
+
+Hart's copyright notice states that, while the text and images of Virtual
+Polyhedra are all-rights-reserved, the individual model files are different:
+
+> An exception is the collection of individual *.wrl files which contain the
+> mathematical description of each polyhedron. Because these contain
+> mathematical information, they may be of use to others with an interest in
+> polyhedra. They may be reproduced and used for noncommercial purposes.
+
+This project is non-commercial and distributes that data on those terms. The
+data was re-exported via the `polyhedra` npm package
+(https://github.com/finnp/polyhedra); see `scripts/generate-catalog.ts`.
+
+Every other model in the catalog — Kepler-Poinsot solids, Catalan duals,
+prisms, antiprisms, bipyramids, trapezohedra, pyramids, cupolae, compounds and
+geodesic spheres — is generated from first principles by this project's own
+code and carries no third-party terms.
+
+## Category structure
+
+The catalog hierarchy follows the one used by Stella 4D / Great Stella
+(https://www.software3d.com/), which is an excellent piece of software and
+worth buying. No Stella code or data is used here.
+
+## earcut
+
+Polygon triangulation uses `earcut` (ISC License), © 2016 Mapbox.

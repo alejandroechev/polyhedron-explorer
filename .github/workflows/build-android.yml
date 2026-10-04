@@ -1,0 +1,146 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'index.html'
+      - '.github/workflows/build-android.yml'
+
+permissions:
+  contents: write
+
+env:
+  NDK_VERSION: '27.2.12479018'
+
+jobs:
+  build-android:
+    name: Build signed APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Android Rust targets
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          # The action's default package list still asks for the long-removed
+          # `tools` package, which fails. platform-tools is all we need.
+          packages: 'platform-tools'
+
+      - name: Install Android NDK
+        run: sdkmanager --install "ndk;${NDK_VERSION}"
+
+      - name: Export NDK_HOME
+        run: echo "NDK_HOME=$ANDROID_HOME/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Initialise the Android project
+        run: npx tauri android init
+
+      - name: Patch the generated Android project
+        run: bash src-tauri/android-patches/patch-android.sh
+
+      - name: Prepare signing keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYSTORE_PATH="$RUNNER_TEMP/release.keystore"
+          if [ -n "${KEYSTORE_BASE64:-}" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_PATH"
+            echo "store_pass=$KEYSTORE_PASSWORD" >> "$GITHUB_OUTPUT"
+            echo "key_pass=$KEY_PASSWORD" >> "$GITHUB_OUTPUT"
+            echo "alias=$KEY_ALIAS" >> "$GITHUB_OUTPUT"
+            echo "Using the repository signing key."
+          else
+            # No signing secrets configured: generate a throwaway key so the
+            # APK is still installable. Builds signed this way cannot upgrade
+            # each other in place, so uninstall before re-installing.
+            keytool -genkeypair -v -keystore "$KEYSTORE_PATH" \
+              -alias ci -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass android -keypass android \
+              -dname "CN=Polyhedron Explorer CI, OU=CI, O=Polyhedron Explorer, L=, S=, C=US"
+            echo "store_pass=android" >> "$GITHUB_OUTPUT"
+            echo "key_pass=android" >> "$GITHUB_OUTPUT"
+            echo "alias=ci" >> "$GITHUB_OUTPUT"
+            echo "::warning::No KEYSTORE_BASE64 secret set; signed with an ephemeral debug key."
+          fi
+          echo "path=$KEYSTORE_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Build the APK
+        run: npx tauri android build --apk
+
+      - name: Sign and align the APK
+        id: sign
+        run: |
+          set -euo pipefail
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          VERSION=$(node -p 'require("./package.json").version')
+          UNSIGNED=$(find src-tauri/gen/android/app/build/outputs/apk -name '*-unsigned.apk' | head -1)
+          if [ -z "$UNSIGNED" ]; then
+            UNSIGNED=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' | head -1)
+          fi
+          echo "Found APK: $UNSIGNED"
+          ALIGNED="$RUNNER_TEMP/aligned.apk"
+          SIGNED="$RUNNER_TEMP/PolyhedronExplorer-v${VERSION}.apk"
+          "$BUILD_TOOLS/zipalign" -p -f 4 "$UNSIGNED" "$ALIGNED"
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "${{ steps.keystore.outputs.path }}" \
+            --ks-key-alias "${{ steps.keystore.outputs.alias }}" \
+            --ks-pass "pass:${{ steps.keystore.outputs.store_pass }}" \
+            --key-pass "pass:${{ steps.keystore.outputs.key_pass }}" \
+            --out "$SIGNED" "$ALIGNED"
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$SIGNED"
+          echo "apk=$SIGNED" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: polyhedron-explorer-android
+          path: ${{ steps.sign.outputs.apk }}
+          retention-days: 30
+
+      - name: Publish a release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.sign.outputs.version }}
+          name: Polyhedron Explorer v${{ steps.sign.outputs.version }}
+          files: ${{ steps.sign.outputs.apk }}
+          make_latest: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,22 @@
+node_modules
+dist
+dist-ssr
+coverage
+*.local
+
+.DS_Store
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Tauri
+src-tauri/target
+src-tauri/gen/android
+src-tauri/gen/apple
+src-tauri/gen/schemas
+
+# Generated icon source; regenerate with scripts/generate-icon.ts
+src-tauri/icons/icon-source.png
