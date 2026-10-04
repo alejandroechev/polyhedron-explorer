@@ -6,6 +6,12 @@ in a browser. One React + Three.js codebase, wrapped in Tauri v2.
 The catalog follows the category hierarchy used by
 [Stella 4D / Great Stella](https://www.software3d.com/Manual/Builtin.php?prod=Great).
 
+**[Try it in your browser →](https://alejandroechev.github.io/polyhedron-explorer/)**
+&nbsp;·&nbsp;
+**[Download the Android APK →](https://github.com/alejandroechev/polyhedron-explorer/releases/latest)**
+
+![Polyhedron Explorer showing the great stellated dodecahedron](docs/screenshot.png)
+
 ## What's in the catalog
 
 | Category | Models |
