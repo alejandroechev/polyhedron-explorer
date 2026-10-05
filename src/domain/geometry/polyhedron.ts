@@ -80,19 +80,23 @@ export function computeEdges(poly: Polyhedron): Edge[] {
 }
 
 /**
- * Signed area magnitude of a (possibly star) polygon, measured in its own
- * plane. For star polygons this counts overlapped regions with multiplicity,
- * which is the convention used for polyhedral surface area.
+ * Area of a (possibly star or crossed) polygon, measured in its own plane by
+ * fanning from the centroid and summing the triangle areas without sign. For
+ * star polygons this counts overlapped regions with multiplicity, which is the
+ * convention used for polyhedral surface area; for crossed quadrilaterals such
+ * as the butterfly faces of a stephanoid it gives the sum of the two lobes
+ * rather than their signed difference.
  */
 export function faceArea(points: readonly Vec3[]): number {
   if (points.length < 3) return 0
-  let acc: Vec3 = [0, 0, 0]
-  const origin = points[0]
-  for (let i = 1; i < points.length - 1; i++) {
-    const c = cross(sub(points[i], origin), sub(points[i + 1], origin))
-    acc = [acc[0] + c[0], acc[1] + c[1], acc[2] + c[2]]
+  const c = centroid(points)
+  let total = 0
+  for (let i = 0; i < points.length; i++) {
+    const u = sub(points[i], c)
+    const v = sub(points[(i + 1) % points.length], c)
+    total += length(cross(u, v)) / 2
   }
-  return length(acc) / 2
+  return total
 }
 
 /**

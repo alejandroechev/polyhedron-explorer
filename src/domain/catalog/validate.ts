@@ -30,7 +30,9 @@ export function validateSpec(spec: PolyhedronSpec): string[] {
   }
 
   const metrics = computeMetrics(poly)
-  if (metrics.volume <= 0) problems.push('non-positive volume')
+  // Crossed faces (the butterflies of a stephanoid, say) make the signed
+  // volume vanish, so surface area and radius carry the degeneracy check.
+  if (!Number.isFinite(metrics.volume)) problems.push('non-finite volume')
   if (metrics.surfaceArea <= 0) problems.push('non-positive surface area')
   if (metrics.circumradius <= 0) problems.push('non-positive circumradius')
 

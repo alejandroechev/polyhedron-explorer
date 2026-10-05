@@ -111,7 +111,10 @@ export default function InfoPanel({
           Normalised to circumradius 1.
         </p>
         <dl className="divide-y divide-white/5">
-          <Row label="Volume" value={fmt(metrics.volume)} />
+          <Row
+            label="Volume"
+            value={metrics.volume > 1e-9 ? fmt(metrics.volume) : 'n/a (crossed faces)'}
+          />
           <Row label="Surface area" value={fmt(metrics.surfaceArea)} />
           <Row label="Circumradius" value={fmt(metrics.circumradius)} />
           <Row label="Midradius" value={fmt(metrics.midradius)} />

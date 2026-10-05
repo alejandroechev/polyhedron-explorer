@@ -4,6 +4,8 @@ import { datasetSource } from './sources/dataset'
 import { familiesSource } from './sources/families'
 import { geodesicSource } from './sources/geodesic'
 import { keplerPoinsotSource } from './sources/kepler-poinsot'
+import { nobleSource } from './sources/noble'
+import { stewartSource } from './sources/stewart'
 import type { CatalogSource, CategoryNode, PolyhedronSpec } from './types'
 
 /**
@@ -16,13 +18,15 @@ const TOP_LEVEL_ORDER = [
   'Pyramids & Cupolae',
   'Johnson Solids',
   'Compounds',
+  'Stewart Toroids',
+  'Noble',
   'Geodesic',
 ]
 
 /**
  * Registered catalog sources. Adding a Stella-like feature (stellations,
- * facetings, noble polyhedra, Stewart toroids, ...) means adding a source
- * here; nothing else in the app needs to change.
+ * facetings, ...) means adding a source here; nothing else in the app needs
+ * to change.
  */
 export const SOURCES: CatalogSource[] = [
   datasetSource,
@@ -30,6 +34,8 @@ export const SOURCES: CatalogSource[] = [
   familiesSource,
   catalanSource,
   compoundsSource,
+  stewartSource,
+  nobleSource,
   geodesicSource,
 ]
 

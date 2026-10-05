@@ -1,6 +1,6 @@
 # Polyhedron Explorer
 
-Browse and explore 226 famous polyhedra in 3D — on the desktop, on Android, or
+Browse and explore 308 famous polyhedra in 3D — on the desktop, on Android, or
 in a browser. One React + Three.js codebase, wrapped in Tauri v2.
 
 The catalog follows the category hierarchy used by
@@ -25,6 +25,10 @@ The catalog follows the category hierarchy used by
 | Pyramids & Cupolae | 6 |
 | Johnson Solids | 92 |
 | Compounds | 8 |
+| Stewart Toroids › Archimedean Rings | 12 |
+| Stewart Toroids › Johnson Rings | 21 |
+| Noble | 2 |
+| Noble › Stephanoids | 47 |
 | Geodesic › Spheres & Domes | 13 |
 
 Plus a live **dual** of anything in the list, computed by polar reciprocation —
@@ -38,6 +42,8 @@ Johnson solids are all one tap away.
 - Opacity and **explode** sliders for looking inside a model.
 - Correct rendering of star faces: a pentagram is drawn as a five-pointed star,
   not as a filled pentagon.
+- Toroids of genus 1 — the Stewart rings and the stephanoids — alongside the
+  classical convex and star solids.
 - Live metrics: V / E / F, Euler characteristic, genus, volume, surface area,
   circum-/mid-/in-radius, edge lengths, and the face-type breakdown.
 - Schläfli, Wythoff and vertex-configuration symbols where they apply.
