@@ -8,16 +8,24 @@ interface ControlsProps {
   readonly showDual: boolean
   readonly onShowDualChange: (value: boolean) => void
   readonly onReset: () => void
+  readonly rupertAvailable: boolean
+  readonly rupertMessage: string
+  readonly showRupert: boolean
+  readonly onShowRupertChange: (value: boolean) => void
+  readonly passagePaused: boolean
+  readonly onPassagePausedChange: (value: boolean) => void
 }
 
 function Toggle({
   label,
   checked,
   onChange,
+  disabled = false,
 }: {
   label: string
   checked: boolean
   onChange: (v: boolean) => void
+  disabled?: boolean
 }) {
   return (
     <label className="flex cursor-pointer items-center justify-between gap-3 py-1.5 text-sm text-slate-300">
@@ -25,6 +33,7 @@ function Toggle({
       <input
         type="checkbox"
         checked={checked}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
         className="h-4 w-4 accent-sky-400"
       />
@@ -83,9 +92,25 @@ export default function Controls({
   showDual,
   onShowDualChange,
   onReset,
+  rupertAvailable,
+  rupertMessage,
+  showRupert,
+  onShowRupertChange,
+  passagePaused,
+  onPassagePausedChange,
 }: ControlsProps) {
   return (
     <div className="space-y-3 p-4">
+      <section>
+        <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Rupert passage
+        </h3>
+        <Toggle label="Show Rupert passage" checked={showRupert} onChange={onShowRupertChange} disabled={!rupertAvailable} />
+        <p role="status" className="text-xs text-slate-400">{rupertMessage}</p>
+        {showRupert && (
+          <Toggle label="Pause passage" checked={passagePaused} onChange={onPassagePausedChange} />
+        )}
+      </section>
       <section>
         <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
           Display
@@ -116,6 +141,7 @@ export default function Controls({
         <label className="block py-1.5 text-sm text-slate-300">
           <span className="mb-1 block">Colouring</span>
           <select
+            disabled={showRupert}
             value={options.colorMode}
             onChange={(e) => onChange({ colorMode: e.target.value as ColorMode })}
             className="w-full rounded-md border border-[var(--color-surface-border)] bg-black/30 px-2 py-1.5 text-sm outline-none focus:border-sky-500"
@@ -135,14 +161,17 @@ export default function Controls({
           step={0.05}
           onChange={(v) => onChange({ opacity: v })}
         />
-        <Slider
-          label="Explode faces"
-          value={options.explode}
-          min={0}
-          max={1.5}
-          step={0.05}
-          onChange={(v) => onChange({ explode: v })}
-        />
+        <fieldset disabled={showRupert}>
+          <Slider
+            label="Explode faces"
+            value={options.explode}
+            min={0}
+            max={1.5}
+            step={0.05}
+            onChange={(v) => onChange({ explode: v })}
+          />
+        </fieldset>
+        {showRupert && <p className="text-xs text-slate-400">Passage mode uses two fixed colours and assembled faces. Your normal display settings are preserved.</p>}
         <Slider
           label="Metalness"
           value={options.metalness}

@@ -29,6 +29,12 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Install browser for interaction tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser interaction tests
+        run: npm run test:e2e
+
       - name: Validate every model in the catalog
         run: npx tsx scripts/validate-catalog.ts
 

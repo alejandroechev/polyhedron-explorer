@@ -3,6 +3,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 import type { Polyhedron } from '../../domain/geometry/polyhedron'
+import { passagePosition, type RupertPassage } from '../../domain/geometry/rupert'
+import { buildRupertObjects } from '../../render/rupertMesh'
 import {
   buildPolyhedronObjects,
   type RenderOptions,
@@ -12,6 +14,8 @@ interface ViewerProps {
   readonly polyhedron: Polyhedron | null
   readonly options: RenderOptions
   readonly autoRotate: boolean
+  readonly passage?: RupertPassage
+  readonly passagePaused: boolean
   readonly onResetRef?: (reset: () => void) => void
 }
 
@@ -24,11 +28,17 @@ export default function Viewer({
   polyhedron,
   options,
   autoRotate,
+  passage,
+  passagePaused,
   onResetRef,
 }: ViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const controlsRef = useRef<OrbitControls | null>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const travellerRef = useRef<THREE.Group | null>(null)
+  const elapsedRef = useRef(0)
+  const pausedRef = useRef(passagePaused)
   const modelRef = useRef<{ group: THREE.Group; dispose(): void } | null>(null)
 
   useEffect(() => {
@@ -40,6 +50,7 @@ export default function Viewer({
     sceneRef.current = scene
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 100)
+    cameraRef.current = camera
     camera.position.set(2.6, 1.9, 2.9)
 
     const renderer = new THREE.WebGLRenderer({
@@ -84,8 +95,13 @@ export default function Viewer({
     observer.observe(container)
 
     let frame = 0
-    const tick = () => {
+    let previous = performance.now()
+    const tick = (now = performance.now()) => {
       frame = requestAnimationFrame(tick)
+      const delta = Math.min((now - previous) / 1000, 0.1)
+      previous = now
+      if (!pausedRef.current) elapsedRef.current += delta
+      if (travellerRef.current) travellerRef.current.position.z = passagePosition(elapsedRef.current)
       controls.update()
       renderer.render(scene, camera)
     }
@@ -93,6 +109,10 @@ export default function Viewer({
 
     onResetRef?.(() => {
       camera.position.set(2.6, 1.9, 2.9)
+      if (travellerRef.current) {
+        const halfFov = Math.atan(Math.tan(Math.PI / 8) * Math.min(1, camera.aspect))
+        camera.position.setLength(3.7 / Math.sin(halfFov) * 1.1)
+      }
       controls.target.set(0, 0, 0)
       controls.update()
     })
@@ -107,22 +127,45 @@ export default function Viewer({
       container.removeChild(renderer.domElement)
       sceneRef.current = null
       controlsRef.current = null
+      cameraRef.current = null
+      travellerRef.current = null
     }
   }, [onResetRef])
 
   useEffect(() => {
     const scene = sceneRef.current
     if (!scene) return
+    travellerRef.current = null
     if (modelRef.current) {
       scene.remove(modelRef.current.group)
       modelRef.current.dispose()
       modelRef.current = null
     }
     if (!polyhedron) return
-    const objects = buildPolyhedronObjects(polyhedron, options)
+    const rupertObjects = passage ? buildRupertObjects(passage, options) : null
+    const objects = rupertObjects ?? buildPolyhedronObjects(polyhedron, options)
+    if (rupertObjects) {
+      travellerRef.current = rupertObjects.traveller
+      rupertObjects.traveller.position.z = passagePosition(elapsedRef.current)
+    }
     scene.add(objects.group)
     modelRef.current = objects
-  }, [polyhedron, options])
+  }, [polyhedron, options, passage])
+
+  useEffect(() => {
+    elapsedRef.current = 0
+    const camera = cameraRef.current
+    const controls = controlsRef.current
+    if (!camera || !controls) return
+    const halfFov = Math.atan(Math.tan(Math.PI / 8) * Math.min(1, camera.aspect))
+    controls.maxDistance = passage ? 40 : 14
+    camera.position.setLength(passage ? 3.7 / Math.sin(halfFov) * 1.1 : Math.hypot(2.6, 1.9, 2.9))
+    controls.update()
+  }, [passage])
+
+  useEffect(() => {
+    pausedRef.current = passagePaused
+  }, [passagePaused])
 
   useEffect(() => {
     const controls = controlsRef.current
@@ -131,5 +174,17 @@ export default function Viewer({
     controls.autoRotateSpeed = 1.6
   }, [autoRotate])
 
-  return <div ref={containerRef} className="relative h-full w-full overflow-hidden" />
+  return (
+    <div className="relative h-full w-full overflow-hidden">
+      <div ref={containerRef} className="h-full w-full" />
+      {passage && (
+        <div className="pointer-events-none absolute bottom-3 left-3 right-3 rounded-lg bg-slate-950/85 px-3 py-2 text-xs text-slate-300">
+          <span className="text-sky-300">Blue: pierced original</span>
+          {' / '}
+          <span className="text-amber-300">Amber: equal-sized copy</span>
+          <p className="mt-1">Drag to orbit; scroll or pinch to zoom. {passagePaused ? 'Passage paused.' : 'Passage repeats in both directions.'}</p>
+        </div>
+      )}
+    </div>
+  )
 }

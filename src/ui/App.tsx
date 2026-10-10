@@ -16,6 +16,7 @@ import Controls from './components/Controls'
 import InfoPanel from './components/InfoPanel'
 import Viewer from './components/Viewer'
 import { useHashRoute, useIsNarrow, usePersistentState } from './hooks'
+import { useRupertPassage } from './hooks/useRupertPassage'
 
 declare const __APP_VERSION__: string
 
@@ -35,6 +36,9 @@ export default function App() {
     { on: true },
   )
   const [showDual, setShowDual] = useState(false)
+  const [rupertModel, setRupertModel] = useState<Polyhedron | null>(null)
+  const [passagePaused, setPassagePaused] = useState(() =>
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [tab, setTab] = useState<MobileTab>('view')
   const narrow = useIsNarrow()
   const resetRef = useRef<() => void>(() => {})
@@ -47,6 +51,8 @@ export default function App() {
   }, [spec, showDual])
 
   const metrics = useMemo(() => computeMetrics(polyhedron), [polyhedron])
+  const rupert = useRupertPassage(polyhedron)
+  const passage = rupertModel === polyhedron && rupert.status === 'available' ? rupert.passage : undefined
 
   const patchOptions = useCallback(
     (patch: Partial<RenderOptions>) => setOptions((prev) => ({ ...prev, ...patch })),
@@ -85,6 +91,14 @@ export default function App() {
       showDual={showDual}
       onShowDualChange={setShowDual}
       onReset={() => resetRef.current()}
+      rupertAvailable={rupert.status === 'available'}
+      rupertMessage={rupert.status === 'available'
+        ? 'Verified fit: an identical, unscaled copy passes through with positive clearance.'
+        : rupert.message}
+      showRupert={!!passage}
+      onShowRupertChange={(on) => setRupertModel(on ? polyhedron : null)}
+      passagePaused={passagePaused}
+      onPassagePausedChange={setPassagePaused}
     />
   )
 
@@ -94,6 +108,8 @@ export default function App() {
       options={options}
       autoRotate={autoRotate.on}
       onResetRef={onResetRef}
+      passage={passage}
+      passagePaused={passagePaused}
     />
   )
 

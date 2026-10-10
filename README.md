@@ -51,6 +51,26 @@ Johnson solids are all one tap away.
 - Deep links: every model has its own URL hash (`#/truncated-icosahedron`).
 - Responsive — a three-pane desktop layout, and a tabbed phone layout.
 
+### Rupert passage
+
+Enable **Show Rupert passage** in the display controls (the **options** tab on
+phones) to watch an equal-sized copy pass through a hole in the selected solid.
+The blue original has a cut-through tunnel with inner walls; the amber copy
+travels through it and back on a continuous 12-second loop. Drag to orbit and
+scroll or pinch to zoom, or use **Pause passage** to inspect a position.
+
+The toggle becomes available only after a background search verifies strict
+projection containment with positive clearance. All five Platonic solids are
+covered; other closed convex models, including live duals, are checked using
+their actual geometry. The search is bounded: **no passage found is not proof
+that a solid lacks the Rupert property**. Non-convex models, stars and compounds
+are not supported by this search.
+
+Passage mode keeps both copies assembled and uses fixed colours; normal display
+settings are restored when it is disabled. Reduced-motion preferences start the
+passage paused. The construction uses the
+[projection-containment criterion](https://chrisjones.id.au/Rupert/index.html).
+
 ## Running it
 
 ```bash
@@ -77,6 +97,7 @@ Artifacts are attached to the workflow run and to a GitHub release.
 ```bash
 npm run lint
 npm test
+npm run build && npm run test:e2e    # install Chromium first: npx playwright install chromium
 npx tsx scripts/validate-catalog.ts   # builds and checks every model
 ```
 
