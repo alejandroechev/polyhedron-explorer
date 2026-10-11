@@ -181,6 +181,8 @@ export default function Viewer({
         <div className="pointer-events-none absolute bottom-3 left-3 right-3 rounded-lg bg-slate-950/85 px-3 py-2 text-xs text-slate-300">
           <span className="text-sky-300">Blue: pierced original</span>
           {' / '}
+          <span className="text-sky-200/70">Translucent: uncarved original</span>
+          {' / '}
           <span className="text-amber-300">Amber: equal-sized copy</span>
           <p className="mt-1">Drag to orbit; scroll or pinch to zoom. {passagePaused ? 'Passage paused.' : 'Passage repeats in both directions.'}</p>
         </div>

@@ -40,8 +40,7 @@ describe('Rupert passages', () => {
 
       const objects = buildRupertObjects(result.passage, DEFAULT_RENDER_OPTIONS)
       objects.group.updateMatrixWorld(true)
-      const hostGroup = objects.group.children[0]
-      const surfaces = hostGroup.children.filter((object) => object instanceof THREE.Mesh)
+      const surfaces = objects.host.children.filter((object) => object instanceof THREE.Mesh)
       // Every traveller vertex has an unobstructed path through the entire cut solid.
       for (const [x, y] of traveller.vertices) {
         const ray = new THREE.Raycaster(new THREE.Vector3(x, y, -3), new THREE.Vector3(0, 0, 1))
@@ -96,10 +95,37 @@ describe('Rupert passages', () => {
       if (object instanceof THREE.LineSegments) edges++
       if (object instanceof THREE.Mesh) expect(object.visible).toBe(false)
     })
-    expect(edges).toBe(2)
+    expect(edges).toBe(3)
     objects.dispose()
     expect(objects.group.children).toHaveLength(0)
     expect(objects.traveller.children).toHaveLength(0)
+    expect(objects.ghost.children).toHaveLength(0)
+  })
+
+  it('keeps the uncarved original visible as a translucent shell', () => {
+    const result = findRupertPassage(normalizeScale(baseSolid('cube')))
+    if (result.status !== 'available') throw new Error('Missing cube passage')
+    const objects = buildRupertObjects(result.passage, DEFAULT_RENDER_OPTIONS)
+    const shell = objects.ghost.children.filter((object): object is THREE.Mesh => object instanceof THREE.Mesh)
+    expect(shell.length).toBeGreaterThan(0)
+    for (const mesh of shell) {
+      const material = mesh.material as THREE.MeshStandardMaterial
+      expect(material.transparent).toBe(true)
+      expect(material.opacity).toBeGreaterThan(0)
+      expect(material.opacity).toBeLessThan(0.3)
+      expect(material.depthWrite).toBe(false)
+      expect(material.polygonOffset).toBe(true)
+    }
+    // The shell spans the carved opening, which the pierced solid leaves empty.
+    objects.group.updateMatrixWorld(true)
+    const opening = result.passage.opening
+    const cx = opening.reduce((sum, [x]) => sum + x, 0) / opening.length
+    const cy = opening.reduce((sum, [, y]) => sum + y, 0) / opening.length
+    const ray = new THREE.Raycaster(new THREE.Vector3(cx, cy, -5), new THREE.Vector3(0, 0, 1))
+    expect(ray.intersectObjects(shell).length).toBeGreaterThan(0)
+    const pierced = objects.host.children.filter((object) => object instanceof THREE.Mesh)
+    expect(ray.intersectObjects(pierced)).toHaveLength(0)
+    objects.dispose()
   })
 
   it('loops smoothly through both sides without teleporting', () => {

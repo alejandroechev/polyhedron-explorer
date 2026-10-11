@@ -9,6 +9,7 @@ test('passage animates, pauses, orbits and restores normal display', async ({ pa
   await expect(toggle).toBeEnabled()
   await toggle.check()
   await expect(page.getByText('Blue: pierced original')).toBeVisible()
+  await expect(page.getByText('Translucent: uncarved original')).toBeVisible()
   const canvas = page.locator('canvas')
   const initial = await canvas.screenshot()
   await expect.poll(async () => (await canvas.screenshot()).equals(initial)).toBe(false)
@@ -39,20 +40,31 @@ test('passage animates, pauses, orbits and restores normal display', async ({ pa
   expect(errors).toEqual([])
 })
 
-test('switching model or dual never retains a stale passage', async ({ page }) => {
+test('the passage setting is sticky across models, duals and reloads', async ({ page }) => {
   await page.goto('/#/cube')
   const toggle = page.getByRole('checkbox', { name: 'Show Rupert passage' })
   await expect(toggle).toBeEnabled()
   await toggle.check()
-  await page.getByRole('checkbox', { name: 'Show dual' }).check()
-  await expect(toggle).not.toBeChecked()
-  await expect(toggle).toBeEnabled()
-  await toggle.check()
+  await expect(page.getByText('Blue: pierced original')).toBeVisible()
+
+  const dual = page.getByRole('checkbox', { name: 'Show dual' })
+  await dual.check()
+  await expect(toggle).toBeChecked()
+  await expect(page.getByText('Blue: pierced original')).toBeVisible()
+  await dual.uncheck()
+
+  // An unsupported model hides the passage without clearing the preference.
   await page.evaluate(() => { window.location.hash = '#/small-stellated-dodecahedron' })
-  await expect(toggle).not.toBeChecked()
-  await expect(toggle).toBeDisabled()
   await expect(page.getByRole('status')).toContainText('closed convex solids')
   await expect(page.getByText('Blue: pierced original')).toBeHidden()
+  await expect(toggle).toBeChecked()
+
+  await page.evaluate(() => { window.location.hash = '#/cube' })
+  await expect(page.getByText('Blue: pierced original')).toBeVisible()
+
+  await page.reload()
+  await expect(page.getByRole('checkbox', { name: 'Show Rupert passage' })).toBeChecked()
+  await expect(page.getByText('Blue: pierced original')).toBeVisible()
 })
 
 test('mobile options preserve passage and touch navigation', async ({ page }) => {

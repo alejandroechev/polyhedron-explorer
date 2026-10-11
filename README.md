@@ -55,8 +55,10 @@ Johnson solids are all one tap away.
 
 Enable **Show Rupert passage** in the display controls (the **options** tab on
 phones) to watch an equal-sized copy pass through a hole in the selected solid.
-The blue original has a cut-through tunnel with inner walls; the amber copy
-travels through it and back on a continuous 12-second loop. Drag to orbit and
+The blue original has a cut-through tunnel with inner walls, wrapped in a
+translucent shell of the uncarved solid so the shape the tunnel was cut from
+stays readable; the amber copy travels through it and back on a continuous
+12-second loop. Drag to orbit and
 scroll or pinch to zoom, or use **Pause passage** to inspect a position.
 
 The toggle becomes available only after a background search verifies strict
@@ -67,8 +69,10 @@ that a solid lacks the Rupert property**. Non-convex models, stars and compounds
 are not supported by this search.
 
 Passage mode keeps both copies assembled and uses fixed colours; normal display
-settings are restored when it is disabled. Reduced-motion preferences start the
-passage paused. The construction uses the
+settings are restored when it is disabled. The toggle and the pause setting are
+sticky: they persist across models, duals and restarts, and the passage simply
+hides on models where no passage is available. Reduced-motion preferences start
+the passage paused. The construction uses the
 [projection-containment criterion](https://chrisjones.id.au/Rupert/index.html).
 
 ## Running it

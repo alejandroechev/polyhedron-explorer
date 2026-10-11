@@ -36,9 +36,14 @@ export default function App() {
     { on: true },
   )
   const [showDual, setShowDual] = useState(false)
-  const [rupertModel, setRupertModel] = useState<Polyhedron | null>(null)
-  const [passagePaused, setPassagePaused] = useState(() =>
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const [rupertPref, setRupertPref] = usePersistentState<{ on: boolean }>(
+    'polyhedron-explorer.rupert',
+    { on: false },
+  )
+  const [passagePaused, setPassagePaused] = usePersistentState<{ on: boolean }>(
+    'polyhedron-explorer.passagePaused',
+    { on: window.matchMedia('(prefers-reduced-motion: reduce)').matches },
+  )
   const [tab, setTab] = useState<MobileTab>('view')
   const narrow = useIsNarrow()
   const resetRef = useRef<() => void>(() => {})
@@ -52,7 +57,7 @@ export default function App() {
 
   const metrics = useMemo(() => computeMetrics(polyhedron), [polyhedron])
   const rupert = useRupertPassage(polyhedron)
-  const passage = rupertModel === polyhedron && rupert.status === 'available' ? rupert.passage : undefined
+  const passage = rupertPref.on && rupert.status === 'available' ? rupert.passage : undefined
 
   const patchOptions = useCallback(
     (patch: Partial<RenderOptions>) => setOptions((prev) => ({ ...prev, ...patch })),
@@ -95,10 +100,11 @@ export default function App() {
       rupertMessage={rupert.status === 'available'
         ? 'Verified fit: an identical, unscaled copy passes through with positive clearance.'
         : rupert.message}
-      showRupert={!!passage}
-      onShowRupertChange={(on) => setRupertModel(on ? polyhedron : null)}
-      passagePaused={passagePaused}
-      onPassagePausedChange={setPassagePaused}
+      showRupert={rupertPref.on}
+      onShowRupertChange={(on) => setRupertPref({ on })}
+      passageActive={!!passage}
+      passagePaused={passagePaused.on}
+      onPassagePausedChange={(on) => setPassagePaused({ on })}
     />
   )
 
@@ -109,7 +115,7 @@ export default function App() {
       autoRotate={autoRotate.on}
       onResetRef={onResetRef}
       passage={passage}
-      passagePaused={passagePaused}
+      passagePaused={passagePaused.on}
     />
   )
 

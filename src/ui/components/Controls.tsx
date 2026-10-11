@@ -12,6 +12,7 @@ interface ControlsProps {
   readonly rupertMessage: string
   readonly showRupert: boolean
   readonly onShowRupertChange: (value: boolean) => void
+  readonly passageActive: boolean
   readonly passagePaused: boolean
   readonly onPassagePausedChange: (value: boolean) => void
 }
@@ -96,6 +97,7 @@ export default function Controls({
   rupertMessage,
   showRupert,
   onShowRupertChange,
+  passageActive,
   passagePaused,
   onPassagePausedChange,
 }: ControlsProps) {
@@ -105,9 +107,9 @@ export default function Controls({
         <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
           Rupert passage
         </h3>
-        <Toggle label="Show Rupert passage" checked={showRupert} onChange={onShowRupertChange} disabled={!rupertAvailable} />
+        <Toggle label="Show Rupert passage" checked={showRupert} onChange={onShowRupertChange} disabled={!rupertAvailable && !showRupert} />
         <p role="status" className="text-xs text-slate-400">{rupertMessage}</p>
-        {showRupert && (
+        {passageActive && (
           <Toggle label="Pause passage" checked={passagePaused} onChange={onPassagePausedChange} />
         )}
       </section>
@@ -141,7 +143,7 @@ export default function Controls({
         <label className="block py-1.5 text-sm text-slate-300">
           <span className="mb-1 block">Colouring</span>
           <select
-            disabled={showRupert}
+            disabled={passageActive}
             value={options.colorMode}
             onChange={(e) => onChange({ colorMode: e.target.value as ColorMode })}
             className="w-full rounded-md border border-[var(--color-surface-border)] bg-black/30 px-2 py-1.5 text-sm outline-none focus:border-sky-500"
@@ -161,7 +163,7 @@ export default function Controls({
           step={0.05}
           onChange={(v) => onChange({ opacity: v })}
         />
-        <fieldset disabled={showRupert}>
+        <fieldset disabled={passageActive}>
           <Slider
             label="Explode faces"
             value={options.explode}
@@ -171,7 +173,7 @@ export default function Controls({
             onChange={(v) => onChange({ explode: v })}
           />
         </fieldset>
-        {showRupert && <p className="text-xs text-slate-400">Passage mode uses two fixed colours and assembled faces. Your normal display settings are preserved.</p>}
+        {passageActive && <p className="text-xs text-slate-400">Passage mode uses two fixed colours and assembled faces. Your normal display settings are preserved.</p>}
         <Slider
           label="Metalness"
           value={options.metalness}
